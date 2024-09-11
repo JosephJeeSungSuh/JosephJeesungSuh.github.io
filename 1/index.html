@@ -13,5 +13,104 @@
     <h1>Project 1</h1>
     <p>This is the page for Project 1. Images of the Russian Empire: Colorizing the Prokudin-Gorskii photo collection.</p>
     <a href="../index.html">Back to Portfolio</a>
+
+    <h2>Introduction</h2>
+    <p>A single image is consisted of three subimages, with each subimage containing pixel values for R, G, or B component.
+        The task is to align three subimages so that one can recover the colored image from three subimages with the least misalignment as possible.</p>
+
+    <h2>Method Overview</h2>
+    <p><strong>Metric:</strong> I used normalized cross-correlation (NCC), a dot product between two normalized image vectors, as a measure of alignment.</p>    
+    <p><strong>Optimization:</strong> For small-sized images, I used a brute-force search to find the best alignment.
+        The search space is defined by three dimensions: given a reference image and a target image, how much x-translation / y-translation / rotation should be applied to the target image
+        to maximize the alignment metric. The search space is discretized uniformly: x(y)-translation by 1 pixel, and rotation by 0.1 degrees.
+        However, I empricially found out that the rotation does not affect the quality of result significantly, so I set the rotation to 0.0 degrees.
+    </p>
+    <p> For large-sized images, I used a hierarchical approach by employing Gaussian pyramid. The idea is to downsample the images and find the best alignment at the coarser level.
+        Then, the alignment is adjusted at the finer level by using the alignment at the coarser level as an initial guess.
+        It can be interpreted as binary search of the parameter space with an assumption that the alignment metric is convex in the alignment parameter space.</p>
+    <p><strong>Optimization detail:</strong> Some images, as provided in the Results section, exhibits some misalignment. To enhance the result, I used an edge instead of the raw pixel values.
+        The edge image is obtained by applying a Sobel filter to the raw image.
+        The edge image is more robust to the misalignment than the raw image, as the edge image is less sensitive to the absolute pixel values and thereby serve as a better indicator for alignment.
+        In the Results section, for large-sized images, Sobel operater is used unless explicitly mentioned otherwise.</p>
+    <p>Also, I cropped the 5% edges from all four directions when calculating the alignment metric, as edge often contains boundaries that reduce the faithfulness of the alignment metric.</p>
+
+    <h2>Results</h2>
+    <p>Here are the results of the alignment for small-sized (.jpg) images.</p>
+
+    <img src="./media/small_scale/cathedral_aligned.jpg" alt="cathedral.jpg">    
+    <p><strong>Cathedral</strong> Green shift: (x,y,rotation) = (2,5,0.0), Red shift: (3,12,0.0) </p>
+
+    <img src="./media/small_scale/monastery_aligned.jpg" alt="monastery.jpg">
+    <p><strong>Monastery</strong> Green shift: (x,y,rotation) = (2,-3,0.0), Red shift: (2,3,0.0) </p>
+
+    <img src="./media/small_scale/tobolsk_aligned.jpg" alt="tobolsk.jpg">
+    <p><strong>Tobolsk</strong> Green shift: (x,y,rotation) = (2,3,0.0), Red shift: (3,6,0.0) </p>
+
+
+
+
+    <p>Here are the results of the alignment for large-sized (.tif) images.
+        Typical runtime per image is around 5 seconds in my local laptop.
+        I could not find a case of significant misalignment.
+    </p>
+
+    <img src="./media/large_scale/church_aligned_use_edge.jpg" alt="church_use_edge.jpg", width="500">
+    <p><strong>Church</strong> Green shift: (x,y,rotation) = (4,25,0.0), Red shift: (-4,58,0.0) </p>
+    
+    <img src="./media/large_scale/emir_aligned_use_edge.jpg" alt="emir_use_edge.jpg", width="500">
+    <p><strong>Emir</strong> Green shift: (x,y,rotation) = (23,49,0.0), Red shift: (40,107,0.0) </p>
+    
+    <img src="./media/large_scale/harvesters_aligned_use_edge.jpg" alt="harvesters_use_edge.jpg", width="500">
+    <p><strong>Harvesters</strong> Green shift: (x,y,rotation) = (17,65,0.0), Red shift: (13,123,0.0) </p>
+    
+    <img src="./media/large_scale/icon_aligned_use_edge.jpg" alt="icon_use_edge.jpg", width="500">
+    <p><strong>Icon</strong> Green shift: (x,y,rotation) = (17,41,0.0), Red shift: (23,90,0.0) </p>
+    
+    <img src="./media/large_scale/lady_aligned_use_edge.jpg" alt="lady_use_edge.jpg", width="500">
+    <p><strong>Lady</strong> Green shift: (x,y,rotation) = (9,56,0.0), Red shift: (13,119,0.0) </p>
+    
+    <img src="./media/large_scale/melons_aligned_use_edge.jpg" alt="melons_use_edge.jpg", width="500">
+    <p><strong>Melons</strong> Green shift: (x,y,rotation) = (10,80,0.0), Red shift: (12,177,0.0) </p>
+    
+    <img src="./media/large_scale/onion_church_aligned_use_edge.jpg" alt="onion_church_use_edge.jpg", width="500">
+    <p><strong>Onion Church</strong> Green shift: (x,y,rotation) = (25,52,0.0), Red shift: (36,107,0.0) </p>
+    
+    <img src="./media/large_scale/sculpture_aligned_use_edge.jpg" alt="sculpture_use_edge.jpg", width="500">
+    <p><strong>Sculpture</strong> Green shift: (x,y,rotation) = (-11,33,0.0), Red shift: (-26,140,0.0) </p>
+    
+    <img src="./media/large_scale/self_portrait_aligned_use_edge.jpg" alt="self_portrait_use_edge.jpg", width="500">
+    <p><strong>Self Portrait</strong> Green shift: (x,y,rotation) = (28,77,0.0), Red shift: (37,176,0.0) </p>
+    
+    <img src="./media/large_scale/three_generations_aligned_use_edge.jpg" alt="three_generations_use_edge.jpg", width="500">
+    <p><strong>Three Generations</strong> Green shift: (x,y,rotation) = (12,54,0.0), Red shift: (9,111,0.0) </p>
+    
+    <img src="./media/large_scale/train_aligned_use_edge.jpg" alt="train_use_edge.jpg", width="500">
+    <p><strong>Train</strong> Green shift: (x,y,rotation) = (2,41,0.0), Red shift: (29,85,0.0) </p>
+
+    <p>Here are the results of the images I selected.</p>
+
+    <img src="./media/large_scale/choice1_aligned_use_edge.jpg" alt="choice_1.jpg", width="500">
+    <p><strong>Choice 1</strong> Green shift: (x,y,rotation) = (10,39,0.0), Red shift: (7,89,0.0) </p>
+    
+    <img src="./media/large_scale/choice2_aligned_use_edge.jpg" alt="choice_2.jpg", width="500">
+    <p><strong>Choice 2</strong> Green shift: (x,y,rotation) = (33,56,0.0), Red shift: (60,125,0.0) </p>
+    
+    <img src="./media/large_scale/choice3_aligned_use_edge.jpg" alt="choice_3.jpg", width="500">
+    <p><strong>Choice 3</strong> Green shift: (x,y,rotation) = (19,37,0.0), Red shift: (25,65,0.0) </p>
+    
+    <h2>Appendix</h2>
+    <p>Here are the results of the alignment for large-sized (.tif) images without using edge image.
+        By comparing with the results using edge image, one can see that using the edge leads to a slightly better result.
+    </p>
+
+    <img src="./media/large_scale/emir_aligned.jpg" alt="emir_without_edge.jpg", width="500">
+    <p><strong>Emir Without Edge</strong> Green shift: (x,y,rotation) = (24,49,0.0), Red shift: (-1,99,0.0) </p>
+    
+    <img src="./media/large_scale/lady_aligned.jpg" alt="lady_without_edge.jpg", width="500">
+    <p><strong>Lady Without Edge</strong> Green shift: (x,y,rotation) = (8,55,0.0), Red shift: (12,110,0.0) </p>
+
+    
+
+
 </body>
 </html>
