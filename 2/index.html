@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <p>This is the page for Project 2. Fun with Filters and Frequencies!</p>
+    <a href="../index.html">Back to Portfolio</a>
+
+    <h1>Project 2</h1>
+    <h2>Introduction</h2>
+    <p>This project has a lot of differnt subproblems.
+        Mainly touch on the concepts of frequency filtering, pyramid, image blending, etc.
+    </p>
+
+
+    <h2>Part 1-1. Fun with Filters</h2>
+
+    <p> 
+        Gradient magnitude computation is obtained by applying finite difference kernels.
+        Two kernels, D_x and D_y, are applied to the image to obtain the partial derivatives in x and y directions.
+    </p>
+    <p>
+        D_x = [1, -1] and D_y = [1; -1] are used for the finite difference kernels.
+        There are different types of kernels, possibly convolved with averaging like a Sobel operator.
+    </p>
+    <p>Below is the partial derivative of 'cameraman' image in x and y directions,
+        obtained by applying finite difference kernels.
+    </p>
+    <p>
+        From left to right, the first image is the partial derivative in x direction,
+        the second image is the partial derivative in y direction,
+        the third image is the gradient magnitude, and the last image is the binary gradient image.
+    </p>
+    <p>
+        For the binary graident image, several thresholds were tested to find the most suitable one.
+        The value of my choice is 70 (where the pixel scale is 0-255).
+    </p>
+    <img src="./media/part1-1_cameraman_dx.png" alt="1-1" width="400">
+    <img src="./media/part1-1_cameraman_dy.png" alt="1-1" width="400">
+    <img src="./media/part1-1_cameraman_gradient.png" alt="1-1" width="400">
+    <img src="./media/part1-1_cameraman_gradient_binary.png" alt="1-1" width="400">
+
+    <h2>Part 1-2. Derivative of Gaussian (DoG) Filter</h2>
+    <p>
+        Now, the partial derivative is obtained after applying DoG filter.
+        Application of DoG filter results in a much smoother gradient image,
+        a thicker edge,
+        and edges robust to noise.
+    </p>
+    <p>
+        Especially, speckles that I observed on the bottom side in the previous section
+        are effectively removed.
+    </p>
+    <img src="./media/part1-2_cameraman_dx.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_dy.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_gradient.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_gradient_binary.png" alt="1-1" width="400">
+
+    <p>
+        We can combine the two-step process, the Gaussian filter followed by the finite difference kernel,
+        into a single step by convolving two kernels (equvialently, multiplication in frequency domain).
+    </p>
+    <p>
+        The image of DoG filters (left: with D_x, right: with D_y) is shown below as a heatmap.
+        I used a 21 x 21 kernel with sigma=1.0.
+    </p>
+    <img src="./media/part1-2_DoG_dx.png" alt="1-1" width="400">
+    <img src="./media/part1-2_DoG_dy.png" alt="1-1" width="400">
+    <p>
+        As expected, applying this single kernal to the cameraman image results in the almost identical gradient images.
+    </p>
+    <img src="./media/part1-2_cameraman_dog_dx.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_dog_dy.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_dog_gradient.png" alt="1-1" width="400">
+    <img src="./media/part1-2_cameraman_dog_gradient_binary.png" alt="1-1" width="400">
+
+    <h2>Part 2-1. Image Sharpening</h2>
+    <p>
+        Image sharpening is a technique to enhance edges of an image.
+        The sharpened image is obtained by adding the Laplacian of the image to the original image.
+    </p>
+    <p>
+        The Laplacian of an image is obtained by applying a Laplacian filter to the image.
+        I have introduced a parameter alpha to control the amount of sharpening.
+    </p>
+    <p>
+        Below are the provided image of Taj Mahal, with Gaussian filter size = 11 x 11, and sigma = 1.0.
+        The first is an original image, the second is a high frequency component, the third and fourth are sharpened images with alpha = 0.4 and 0.8.
+    </p>
+    <p>
+        In the sharpened version, edges and detailed patterns of the building is much more visible.
+    </p>
+    <img src="./media/part2-1_taj_original.png" alt="2-1" width="400">
+    <img src="./media/part2-1_taj_highfreq.png" alt="2-1" width="400">
+    <img src="./media/part2-1_taj_sharpened_alpha_0.4.png" alt="2-1" width="400">
+    <img src="./media/part2-1_taj_sharpened.png" alt="2-1" width="400">
+    <p>
+        Below is the image of my choices! I had tuned alpha = 0.5, 1.0, 1.5 for this case.
+        We can observe that the edges of buildings and the sky (cloud) are getting sharper as alpha increases.
+    </p>
+    <img src="./media/part2-1_building_original.png" alt="2-1" width="400">
+    <img src="./media/part2-1_building_sharpened_alpha_0.5.png" alt="2-1" width="400">
+    <img src="./media/part2-1_building_sharpened_alpha_1.0.png" alt="2-1" width="400">
+    <img src="./media/part2-1_building_sharpened_alpha_1.5.png" alt="2-1" width="400">
+    <p>
+        Below is an image of a cat, which is already sharp enough.
+        The first is an original image, the second is a blurred one, the third is a re-sharpened image.
+    </p>
+    <p>
+        The re-sharpened image is not as sharp as the original image.
+        This is because the high frequency information is already lost during the Gaussian filtering.
+        Even if image sharpening is performed, we cannot recover the lost high frequency information.
+    </p>
+    <img src="./media/part2-1_cat_original.png" alt="2-1" width="400">
+    <img src="./media/part2-1_cat_blurred.png" alt="2-1" width="400">
+    <img src="./media/part2-1_cat_resharpen.png" alt="2-1" width="400">
+
+
+    <h2>Part 2-2. Hybrid Images</h2>
+    <p>
+        Hybrid images are created by combining the low frequency component of one image with the high frequency component of another image.
+        The low frequency one is obtained by a Gaussian filter, and the high frequency one is obtained by a Laplacian filter.
+    </p>
+    <p>
+        First, this is the hybrid image of Derek (low frequency) and nutmeg (high frequency).
+        I have used color to enhance to effect. The color is only used for the high frequency component.
+        I used sigma = 15 for the cutoff frequency of low pass filter, and sigma = 10 for the high pass filter.
+    </p>
+    <p>
+        The reason is that low frequency components are spread out over the image (as it corresponds to bulk),
+        while high frequency components are localized (as it corresponds to edges).
+        To make high frequency more visible, it should be colored while the low frequency is just grayscaled.
+    </p>
+    <img src="./media/DerekPicture.jpg" alt="2-2" width="350">
+    <img src="./media/nutmeg.jpg" alt="2-2" width="400">
+    <img src="./media/hybrid_derek_nutmeg.png" alt="2-2" width="800">
+
+    <p>
+        This is an image of an actor (low frequency) and an werewolf (high frequency).
+        Cutoff frequencies are sigma = 15 for low pass filter and sigma = 7.5 for high pass filter.
+    </p>
+    <img src="./media/werewolf.jpg" alt="2-2" width="400">
+    <img src="./media/actor.jpg" alt="2-2" width="400">
+    <img src="./media/hybrid_actor_werewolf.png" alt="2-2" width="800">
+
+    <p>
+        (Favorite choice) This is an image of a k-pop idol Newjeans Hani (low frequency) and Minji (high frequency).
+        used the same cutoff frequencies as in the Derek and nutmeg case.
+    </p>
+    <img src="./media/newjeans_hani.jpg" alt="2-2" width="400">
+    <img src="./media/newjeans_minji.jpg" alt="2-2" width="400">
+    <img src="./media/hybrid_newjeans.png" alt="2-2" width="800">
+    <p>
+        Also, for this favorite choice, these are the frquency domain plots.
+        From left to right, they are Fourier transform of Hani, Hani (Gaussian filtered), Minji, and Minji (Laplacian filtered).
+    </p>
+    <p>
+        For Hani, by comparing FFT of original and Gaussian filtered, we can see that high frequencies are removed
+        so that the distribution of amplitude is narrowed and more concentrated on the center.
+    </p>
+    <p>
+        For Minji, by comparing FFT of original and Laplacian filtered, we can see that low frequencies are removed
+        so that the distribution of amplitude is broadened.
+    </p>
+    <img src="./media/fft_hani.jpg" alt="2-2" width="400">
+    <img src="./media/fft_hani_lowpass.jpg" alt="2-2" width="400">
+    <img src="./media/fft_minji.jpg" alt="2-2" width="400">
+    <img src="./media/fft_minji_highpass.jpg" alt="2-2" width="400">
+
+    <p>
+        (Faliure case) This is an image of a lion (low frequency) and a tiger (high frequency).
+        I tweaked the cutoff frequencies around the Derek and nutmeg case, but the result is not as effective.
+    </p>
+    <p>
+        I think the reason is because the posture of the lion and tiger are not aligned.
+        The lion's legs are left to the head, while the tiger's body is right to the head.
+        Alignment affects perceptual grouping (as mentioned in the paper)..
+    </p>
+    <img src="./media/lion.jpg" alt="2-2" width="400">
+    <img src="./media/tiger.jpg" alt="2-2" width="400">
+    <img src="./media/hybrid_tiger_lion.png" alt="2-2" width="800">
+
+    <h2>Part 2-3. Gaussian and Laplacian Stacks</h2>
+   
+    <p>
+        The Gaussian stack is created by applying a Gaussian filter to the image multiple times.
+        The sigma of Gaussian filter is increased by a factor of 2 as the stack goes up.
+    </p>
+    <p>
+        The Laplacian stack is created by subtracting the Gaussian stack from the image,
+        while the topmost level of the stack is same as the one from Gaussian stack.
+    </p>
+    <p>
+        We also obtain that Gaussian stack for the mask (linear mask for Oraple case),
+        as we are blending two images at each frequency level
+        and the optimal interpolation intermediate region is determined by the frequency level we are working on.
+    </p>
+    <p>
+        I used a rectangular mask in which mask values at the intermediate region is linearly interpolated.
+    </p>
+    <p>
+        Below is the Laplacian stack of the orange image (unmasked), from level 0 to 5 Levels combined image is identical to the original image.
+    </p>
+    <img src="./media/laplacian_stack_im1_0.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_1.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_2.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_3.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_4.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_5.png" alt="2-3" width="300">
+    <p>
+        Below is the Laplacian stack of the orange image (masked), from level 0 to 5.
+    </p>    
+    <img src="./media/laplacian_stack_im1_masked_0.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_masked_1.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_masked_2.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_masked_3.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_masked_4.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1_masked_5.png" alt="2-3" width="300">
+    <p>
+        Below is the Laplacian stack of the apple image (unmasked), from level 0 to 5.
+    </p>
+    <img src="./media/laplacian_stack_im2_0.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_1.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_2.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_3.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_4.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_5.png" alt="2-3" width="300">
+    <p>
+        Below is the Laplacian stack of the apple image (masked), from level 0 to 5.
+    </p>
+    <img src="./media/laplacian_stack_im2_masked_0.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_masked_1.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_masked_2.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_masked_3.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_masked_4.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im2_masked_5.png" alt="2-3" width="300">
+    <p>
+        Below is the Laplacian stack of the combined apple and orange image, from level 0 to 5.
+    </p>
+    <img src="./media/laplacian_stack_im1+2_masked_0.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1+2_masked_1.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1+2_masked_2.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1+2_masked_3.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1+2_masked_4.png" alt="2-3" width="300">
+    <img src="./media/laplacian_stack_im1+2_masked_5.png" alt="2-3" width="300">
+    <p>
+        Finally, the combined image (Oraple!) looks like this:
+    </p>
+    <img src="./media/oraple.png" alt="2-3" width="800">
+
+    <h2>Part 2-4. Multiresolution Blending</h2>
+    <p>
+        Here I present two additional instances of multiresolution blending,
+        one with the rectangular mask (the one I used in Oraple) and the other with an irregular mask.
+    </p>
+    <p>
+        The first one is the blending of the apple and orange image.
+        The second one is the blending of the apple and orange image with an irregular mask.
+    </p>
+    <p>
+        From left to right, the day image of New York City, the night image of New York City, the shape of mask (actually level 0 of Lapalcian stack), and the blended image.
+    </p>
+    <p>
+        The transition from day to night is smooth, and the lights of the city are gradually turned on!
+    </p>
+    <img src="./media/newyork_day.jpg" alt="2-4" width="400">
+    <img src="./media/newyork_night.jpg" alt="2-4" width="400">
+    <img src="./media/blended_newyork_mask.png" alt="2-4" width="400">
+    <img src="./media/blended_newyork.png" alt="2-4" width="400">
+
+    <p>
+        From left to right, the image of ballerina, firework, the shape of mask, and the blended image.
+    </p>
+    <p>
+        Without multiresolution blending, the ballerina is awkwardly placed on the firework with a sharp edge.
+        Now, the ballerina is smoothly blended with the firework!
+    </p>
+    <img src="./media/ballerina.jpg" alt="2-4" width="400">
+    <img src="./media/fireworks.jpg" alt="2-4" width="400">
+    <img src="./media/blended_ballerina_mask.png" alt="2-4" width="400">
+    <img src="./media/blended_ballerina.png" alt="2-4" width="400">
+
+</body>
+</html>
