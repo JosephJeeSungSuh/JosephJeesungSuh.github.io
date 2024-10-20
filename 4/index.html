@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project 4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="../index.html">Back to Portfolio</a>
+
+    <h1>Project 4 : Image Warping and Mosaicing</h1>
+    <h2>Introduction</h2>
+    <p>The goal of this project is implementing image warping and mosaicing techniques.</p>
+
+    <h2>Part 1. Shoot and digitize pictures</h2>
+
+    <p>Here are the photos used in the project. First, North Berkeley taken from BAIR:</p>
+    <img src="media/bair_01.jpeg" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/bair_02.jpeg" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/bair_03.jpeg" alt="North Berkeley" style="width: 500px"/>
+
+    <p>Second, a living room of my place:</p>
+    <img src="media/room_01.jpeg" alt="Living Room" style="width: 500px"/>
+    <img src="media/room_02.jpeg" alt="Living Room" style="width: 500px"/>
+    <img src="media/room_03.jpeg" alt="Living Room" style="width: 500px"/>
+
+    <p>Third, a neighborhood taken from the patio (the hill is the Berekeley Hills)</p>
+    <img src="media/neighbor_01.jpeg" alt="Neighborhood" style="width: 500px"/>
+    <img src="media/neighbor_02.jpeg" alt="Neighborhood" style="width: 500px"/>
+    <img src="media/neighbor_03.jpeg" alt="Neighborhood" style="width: 500px"/>
+
+    <h2>Part 2. Recover homographies</h2>
+
+    <p>To recover homographies, first I identified a correspondence between two images.</p>
+    <p>Below is an example of correspondence between images taken at BAIR. I have connected corresponding points with red lines.</p>
+    <p>For this example, I would refer the left one as the target image to apply transformation, and the right one as the reference image.</p>
+    <img src="media/bair_01_bair_02_correspondence.png" alt="North Berkeley" style="width: 1500px"/>
+    <p>
+        Then I used the direct linear transformation to recover the homography matrix, H.
+        Link: <a href="https://en.wikipedia.org/wiki/Direct_linear_transformation">Direct linear transformation</a>
+        This approach recovers 8 elements of H (the last element is normalized to 1).
+    </p>
+    <p>
+        Given the homography matrix and its inverse, I first inverse map the four corners of target image to
+        estimate the bounding box of the transformed image.
+    </p>
+    <p>
+        Then I apply the forward map to all pixels in the bounding box, to identify which pixel does not have a corresponding pixel in the target image.
+    </p>
+    <p>
+        In the figure below, red pixels are forward mapped from all pixels in the bounding box,
+        and black lines indicate the boundary of the target image.
+        Red pixels outside the boundary do not have a corresponding pixel value, thus left blank.
+    </p>
+    <p>
+        For red pixels inside the boundary, I use bilinear interpolation to estimate the pixel value (already implemented from Project 3!).
+    </p>
+    <img src="media/bounding_box_example.png" alt="North Berkeley" style="width: 500px"/>
+    <p>
+        This is the warping result of the target image (left) to the reference image (right).
+        More details on image warping are provided in the Part 4 (Blending images into a mosaic).
+    </p>
+    <img src="media/bair_01_warped.png" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/bair_02.jpeg" alt="North Berkeley" style="width: 500px"/>
+
+
+
+    <h2>Part 3. Warp the images [two examples of rectified images]</h2>
+
+    <p>
+        Now we can calculate homography matrix for a pair of images, we can do image rectification.
+        These are the images (and targets) to rectify: a desk (a laptop monitor) and a desk (iPad screen).
+    </p>
+
+    <img src="media/laptop.jpeg" alt="Desk" style="width: 500px"/>
+    <img src="media/ipad.jpeg" alt="Desk" style="width: 500px"/>
+
+    <p>
+        While corneres of a latop monitor and a iPad are selected from the images,
+        the reference correspondence points are defined to be a rectangle.
+    </p>
+    <p>
+        Here are the results of rectification. Both the laptop monitor and the iPad screen are placed in a rectangle with edges parallel to the image edges.
+    </p>
+
+    <img src="media/laptop_rectify.png" alt="Desk" style="width: 500px"/>
+    <img src="media/ipad_rectify.png" alt="Desk" style="width: 500px"/>
+
+    <p>
+        The rectification part was the hardest part the project.
+        I noticed that rectifying a plane to a rectangle may result in surrounding pixels warped to the extremely large coordinate.
+    </p>
+    <p>
+        This is due to the nature of homography; when one tries to warp a plane to another plane,
+        the outer region of the image can quickly go to infinity.
+    </p>
+    <p>
+        To avoid this, instead of using the vanila bounding box, I clipped the bounding box to limit the size of
+        the warped image - it works well and preserves the region of interest (where the object to rectify is).
+    </p>
+
+    <h2>Part 4. Blend images into a mosaic [three examples]</h2>
+
+    <p>Using three images from Part 1, I present image mosaicing. First, I compare the effect of the following blending methods:
+        (1) No blending - overwriting one image's pixel with another's,
+    </p>
+    <p>
+        (2) Alpha blending - blending two images with a weight using distance transformation,
+        and (3) Laplacian blending - blending two images with a two-stack Laplacian stack.
+    </p>
+    <p>
+        First, this is the result of no blending. We can observe the strong edge artifacts.
+    </p>
+    <img src="media/blending_no.png" alt="North Berkeley" style="width: 1000px"/>
+    <p>
+        Second, this is the result of alpha blending.
+        I first calculate the distance transformation of the target image and the reference image.
+        Then I blend the two images with the weight of the distance transformation.
+    </p>
+    <p>
+        Left two images are distance transformations of the target image and the reference image.
+        The rightmost image is the result of alpha blending.
+    </p>
+    <p>
+        The strong edge artifacts are reduced, however some wedge-like artifacts are visible due to
+        the misalignment of two images at pixels far from the predefined correspondence points.
+    </p>
+    <img src="media/blending_distance_1.png" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/blending_distance_2.png" alt="North Berkeley" style="width: 500px"/>
+    <p></p>
+    <img src="media/blending_alpha.png" alt="North Berkeley" style="width: 1000px"/>
+
+    <p>
+        Finally, this is the result of Laplacian blending.
+        I first calculate the two-level Laplacian stack (i.e. low frequency and high frequency component)
+        of the target image and the reference image.
+    </p>
+    <p>
+        For the low frequency component, I blend the two images with the weight of the distance transformation.
+        For the high frequency component, for each pixel, I take the pixel value from the image with the larger distance transformation.
+    </p>
+    <p>
+        This result performs best among all methods in terms of minimizing blending artifacts.
+        I use this method throughout the image mosaicing of three scenes.
+    </p>
+    <img src="media/blending_laplacian.png" alt="North Berkeley" style="width: 1000px"/>
+    <p>
+        Here is the result of mosaicing North Berkeley from BAIR:
+    </p>
+    <img src="media/bair_final.png" alt="North Berkeley" style="width: 1500px"/>
+    <p>
+        Here is the result of mosaicing the living room:
+    </p>
+    <img src="media/room_final.png" alt="Living Room" style="width: 1500px"/>
+    <p>
+        Finally, here is the result of mosaicing the neighborhood. For this one, I took pictures in the vertical direction.
+    </p>
+    <img src="media/neighbor_final.png" alt="Neighborhood" style="width: 1000px"/>
+
+
+</body>
+</html>
