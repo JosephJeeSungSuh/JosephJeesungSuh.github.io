@@ -13,7 +13,7 @@
 
     <a href="../index.html">Back to Portfolio</a>
 
-    <h1>Project 4 : Image Warping and Mosaicing</h1>
+    <h1>Project 4a : Image Warping and Mosaicing</h1>
     <h2>Introduction</h2>
     <p>The goal of this project is implementing image warping and mosaicing techniques.</p>
 
@@ -161,6 +161,142 @@
         Finally, here is the result of mosaicing the neighborhood. For this one, I took pictures in the vertical direction.
     </p>
     <img src="media/neighbor_final.png" alt="Neighborhood" style="width: 1000px"/>
+
+    <h1>Feature Matching and Autostitching</h1>
+
+    <h2>Introduction</h2>
+    <p>The goal of this second part is to create a system for automatically stitching images.</p>
+
+    <h2>Part 1. Detecting corner features in an image</h2>
+
+    <p>
+        I used the skeleton code provided for the Harris corner detection.
+        Initially, the number of detected corners was too high, so I adjusted a threshold to reduce the number of points.
+    </p>
+    <p>
+        After obtaining initial corners, I applied adaptive non-maximum suppression.
+        Implementation details follow the paper, with c_robust = 0.9 and the number of survived points 500.
+    </p>
+    <p>
+        Here is the result of corner detection for the North Berkeley image.
+        Left: Harris corner detection, Right: After adaptive non-maximum suppression.
+    </p>
+
+    <img src="media/bair_harris.png" alt="North Berkeley" style="width: 750px"/>
+    <img src="media/bair_harris_anms.png" alt="North Berkeley" style="width: 750px"/>
+
+
+    <h2>Part 2. Extracting a Feature Descriptor for each feature point</h2>
+
+    <p>
+        For each of the corners, I extracted a 8-by-8 feature descriptor.
+        Implementation details follow the paper.
+    </p>
+    <p>
+        First, I obtained the graident at the corner point by applying a Sobel filter to a Gaussian filtered image.
+        Then I sampled 40-by-40 pixels around the corner point, with one edge of the square aligned with the gradient direction.
+    </p>
+    <p>
+        <b>(Bells & Whistles)</b> This procedure provides a rotational invariance of the feature descriptor.
+    </p>
+    <p>
+        After sampling, I average-pooled the 40-by-40 pixels to 8-by-8 pixels for robustness.
+        Instead of downsampling, I used the average pooling and it worked reasonably well.
+        Bias / gain normalized descriptors are ready to be used for matching.
+    </p>
+    <p>
+        Here is the grayscaled image of some feature descriptors extracted from the North Berkeley image.
+    </p>
+    <img src="media/feature_01.png" alt="North Berkeley" style="width: 375px"/>
+    <img src="media/feature_02.png" alt="North Berkeley" style="width: 375px"/>
+    <p></p>
+    <img src="media/feature_03.png" alt="North Berkeley" style="width: 375px"/>
+    <img src="media/feature_04.png" alt="North Berkeley" style="width: 375px"/>
+
+
+    <h2>Part 3. Matching these feature descriptors between two images</h2>
+
+    <p>
+        An i-th feature descriptor of image 1, F_1i, is matched with the j-th feature descriptor of image 2 F_2j
+        if it satisfies two conditions:
+    </p>
+    <p>
+        (1) F_2j is the closest descriptor to F_1i among all descriptors in image 2.
+        (2) The ratio of the distance between F_1i and F_2j to the distance between F_1i and the second closest descriptor in image 2 is less than 0.5.
+    </p>
+    <p>
+        Here, the threshold of 0.5 was choosen empricially as it worked well enough.
+    </p>
+    <p> 
+        Here is the result of feature matching in the North Berkeley images and the living room images.
+        There still exist some false positives but the majority of the matches are correct.
+    </p>
+    <img src="media/bair_feature_matching.png" alt="North Berkeley" style="width: 1500px"/>
+    <p></p>
+    <img src="media/room_feature_matching.png" alt="Living Room" style="width: 1500px"/>
+
+    <h2>Part 4. Use a robust method (RANSAC) to compute a homography</h2>
+
+    <p>
+        I used RANSAC to compute a homography matrix between two images.
+        It repreats the folloowing iteration 1000 times:
+    </p>
+    <p>
+        (1) Randomly select four pairs of correspondence points candidates.
+    </p>
+    <p>
+        (2) Compute a homography matrix using them.
+    </p>
+    <p>
+        (3) Apply the homography matrix to all candidates.
+    </p>
+    <p>
+        (4) Count the number of inliers - the distance between the transformed point and the reference point is less than a threshold.
+    </p>
+    <p>
+        Here is the result of RANSAC for the North Berkeley images and the living room images.
+        Compared to the previous images, only the good correspondences survived!
+    </p>
+    <img src="media/bair_ransac.png" alt="North Berkeley" style="width: 1500px"/>
+    <p></p>
+    <img src="media/room_ransac.png" alt="Living Room" style="width: 1500px"/>
+
+
+    <h2>Part 5. Proceed as in the first part to produce a mosaic</h2>
+    <p>
+        Now we have the homography matrix automatically computed, we can proceed to image mosaicing.
+        Here are the results of three scenes. <b>Left: manually stitched, Right: automatically stitched.</b>
+    </p>
+    <p>
+        There is a slight differnce in outcomes, but both stitching looks good enough.
+    </p>
+    <img src="media/bair_final.png" alt="North Berkeley" style="width: 750px"/>
+    <img src="media/bair_final_automatic.png" alt="North Berkeley" style="width: 750px"/>
+    <p></p>
+    <img src="media/room_final.png" alt="Living Room" style="width: 750px"/>
+    <img src="media/room_final_automatic.png" alt="Living Room" style="width: 750px"/>
+    <p></p>
+    <img src="media/neighbor_final.png" alt="Neighborhood" style="width: 750px"/>
+    <img src="media/neighbor_final_automatic.png" alt="Neighborhood" style="width: 750px"/>
+
+    <p>
+        Additionally, this is the automatically stitched result of North Berkeley where
+        images are taken with rotation. This clearly shows the rotational invariance of my feature descriptor!
+    </p>
+    <img src="media/bair_01_rotated.jpeg" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/bair_02_rotated.jpeg" alt="North Berkeley" style="width: 500px"/>
+    <img src="media/bair_03_rotated.jpeg" alt="North Berkeley" style="width: 500px"/>
+    <p></p>
+    <img src="media/bair_rotated_final_automatic.png" alt="North Berkeley" style="width: 1500px"/>
+
+    <h2>What have I learned?</h2>
+    <p>
+        At first, I thought that classical algorithms of feature detection are not robust enough for real-world applications.
+        The part B of this project was literally a shock to me - I was amazed by the power of feature matching.
+    </p>
+    <p>
+        Especially, combination of heuristic methods like using the 1-NN / 2-NN ratio and RANSAC turned out to be extremely powerful.
+        While we are in the era of deep networks, knowledge from the past are often useful!
 
 
 </body>
