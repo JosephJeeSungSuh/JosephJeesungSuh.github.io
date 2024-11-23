@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project 4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="../index.html">Back to Portfolio</a>
+
+    <h1>Project 5a : The Power of Diffusion Models</h1>
+    <h2>Introduction</h2>
+    <p>The goal of this project is to simply play around with diffusion models.</p>
+
+    <h2>Part 0: Setup</h2>
+    <p>Here are 3 provided text prompts and the output of the model.</p>
+    <p>The model is able to capture the semantics of the given prompt, and the quality of the image increases as the number of steps increases.</p>
+    <p>When the number of steps is 5, there exist visible noises in the image reflecting that the denoising steps are insufficient.</p>
+    <p>Moving on to steps of 20, the noise is almost gone; with 100 steps, the image has detailed textures.</p>
+    <p>I have used the seed of 42 from here and throughout the project part A.</p>
+
+    <p>Number of steps: 5</p>
+    <img src="./media_part_a/part0_n_step=5.png" alt="setup" width="600">
+    <p>Number of steps: 20</p>
+    <img src="./media_part_a/part0_n_step=20.png" alt="setup" width="600">
+    <p>Number of steps: 100</p>
+    <img src="./media_part_a/part0_n_step=100.png" alt="setup" width="600">
+
+
+    <h2>Part 1: Sampling Loops - 1.1 Implementing the Forward Process</h2>
+    <p>Here are the images of the original Campanile and at the forward path of noise level 250, 500, and 750.</p>
+    <img src="./media_part_a/campanile.jpg" alt="forward_noise0" width="200", height="200">
+    <img src="./media_part_a/step_1p1_campanile_250.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_500.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_750.jpg" alt="forward_noise0" width="200">
+    
+    <h2>Part 1: Sampling Loops - 1.2 Classical Denoising</h2>
+    <p>Here are the images of the noised images and denoised ones using Gaussian filter with kernel size = 5 and default (1.1) sigma.</p>
+    <p>Classical denoising is not a good solution, particularly at a high noise level.</p>
+    <img src="./media_part_a/step_1p1_campanile_250.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_500.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_750.jpg" alt="forward_noise0" width="200">
+    <br>
+    <img src="./media_part_a/step_1p2_campanile_250.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p2_campanile_500.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p2_campanile_750.jpg" alt="forward_noise0" width="200">
+
+    <h2>Part 1: Sampling Loops - 1.3 One-Step Denoising</h2>
+    <p>With a pretrained UNet, I estimate the noise by passing through stage_1.unet and remove the estimated noise from the noisy image.</p>
+    <p>Here are the images of the noised images and one-step denoised ones at noise level 250, 500, and 750.</p>
+    <p>The results are much better than the classical denoising, albeit losing a lot of high frequency components.</p>
+    <img src="./media_part_a/step_1p1_campanile_250.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_500.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p1_campanile_750.jpg" alt="forward_noise0" width="200">
+    <br>
+    <img src="./media_part_a/step_1p3_campanile_250.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p3_campanile_500.jpg" alt="forward_noise0" width="200">
+    <img src="./media_part_a/step_1p3_campanile_750.jpg" alt="forward_noise0" width="200">
+
+    <h2>Part 1: Sampling Loops - 1.4 Iterative Denoising</h2>
+    <p>With the same pretrained UNet, I iteratively denoise the image by passing through stage_1.unet multiple times.</p>
+    <p>To reduce the computation, used strided timesteps where the stride is 30.</p>
+    <p>Iterative denoising works by first estimating the clean image with current noisy image, then estimating the immediate previous timestep.</p>
+    <p>Also, the previous (classical, one-step) denoising approaches are presented. It is clear that the iterative denoising results in the best quality.</p>
+    
+    <p>Iterative denoising (stride=30) at timestep 690, 540, 390, 240, 90, final.</p>
+    <img src="./media_part_a/step_1p4_campanile_690.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_540.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_390.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_240.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_90.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_30.jpg" alt="forward_noise0" width="150">
+    <p>Original image (not downsampled), Gaussian blurred, One-step denoised</p>
+    <img src="./media_part_a/campanile.jpg" alt="forward_noise0" width="150", height="150">
+    <img src="./media_part_a/step_1p4_campanile_690_blur.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p4_campanile_690_onestep.jpg" alt="forward_noise0" width="150">
+
+    <h2>Part 1: Sampling Loops - 1.5 Diffusion Model Sampling</h2>
+    <p>Here are five sampled images by passing a random noise and using the prompt "a high quality photo". Still using the strided timesteps.</p>
+    <img src="./media_part_a/step_1p5_campanile_0_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p5_campanile_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p5_campanile_2_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p5_campanile_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p5_campanile_4_gen.jpg" alt="forward_noise0" width="150">
+
+    <h2>Part 1: Sampling Loops - 1.6 Classifier-Free Guidance (CFG)</h2>
+    <p>Here are five sampled images with guidance, using the conditioning prompt "a high quality photo" and a null prompt, with gudiance scale of 7.0.</p>
+    <p>The guidance is effective in generating high quality images with vivid colors and more realistic details.</p>
+    <p>This is really interesting and maybe implying an algebraic structure in the noise space, happy to look into this line of research...</p>
+    <img src="./media_part_a/step_1p6_campanile_0_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p6_campanile_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p6_campanile_2_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p6_campanile_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p6_campanile_4_gen.jpg" alt="forward_noise0" width="150">
+
+    <h2>Part 1: Sampling Loops - 1.7 Image-to-image Translation</h2>
+    <p>Here are the images of the image-to-image translation with CFG (the previous section) for Campanile and two own test images.</p>
+    <p>This is SDEdit: first the noise is added to the image, then the model is guided to generate a new image resulting in a different image.</p>
+    <p>Each row corresponds to each image and columns correspond to the result at i_start = 1, 3, 5, 7, 10, 20, and original.</p>
+    <p>It is interesting to see model being creative at intermediate noise levels, but also generating a completely different image at high noise levels.</p>
+    <img src="./media_part_a/step_1p7_campanile_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_campanile_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_campanile_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_campanile_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_campanile_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_campanile_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/campanile.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    <br>
+    <img src="./media_part_a/step_1p7_bread_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bread_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bread_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bread_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bread_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bread_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/bread.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    <br>
+    <img src="./media_part_a/step_1p7_bicycle_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bicycle_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bicycle_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bicycle_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bicycle_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_bicycle_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/bicycle.jpg" alt="forward_noise0" width="150", height="150", width="150">
+
+
+    <h2>Part 1: Sampling Loops - 1.7.1 Editing Hand-Drawn and Web Images</h2>
+
+    <p>Here are the images of the image-to-image translation with CFG for 1 image from the web (Mario), and 2 hand-drawn images (Trees, Room).</p>
+    <p>In the intermediate noise level (i_start = 7,10 especially) the model is able to get a quite natural image.</p>
+
+    <img src="./media_part_a/step_1p8_mario_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p8_mario_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p8_mario_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p8_mario_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p8_mario_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p8_mario_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/mario.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    <br>
+    <img src="./media_part_a/step_1p7_trees_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_trees_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_trees_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_trees_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_trees_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_trees_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/trees.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    <br>
+    <img src="./media_part_a/step_1p7_room_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_room_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_room_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_room_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_room_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p7_room_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/room.jpg" alt="forward_noise0" width="150", height="150", width="150">
+
+    <h2>Part 1: Sampling Loops - 1.7.2 Inpainting</h2>
+
+    <p>Here are the images of the inpainting with test image and two images of my choice.</p>
+    <p>Inpainting is performed by forcing the unmasked region of the image to be the same as the original image during denoising.</p>
+
+    <p>Input image, mask, hole to fill</p>
+    <img src="./media_part_a/campanile.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/mask_campanile.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/to_replace_campanile.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <p>Denoising steps at the timestep of 990, 840, 690, 540, 390, 240, 90, 30.</p>
+    <img src="./media_part_a/step_1p8_campanile_990.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_840.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_690.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_540.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_390.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_240.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_90.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_campanile_30.jpg" alt="forward_noise0" width="120">
+
+    <p>Input image, mask, hole to fill</p>
+    <img src="./media_part_a/flower.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/mask_flower.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/to_replace_flower.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <p>Denoising steps at the timestep of 990, 840, 690, 540, 390, 240, 90, 30.</p>
+    <img src="./media_part_a/step_1p8_flower_inpaint_990.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_840.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_690.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_540.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_390.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_240.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_90.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_flower_inpaint_30.jpg" alt="forward_noise0" width="120">  
+
+    <p>Input image, mask, hole to fill: for this unrealistic image, the inpainting didn't work well..</p>
+    <img src="./media_part_a/mario.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/mask_mario.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <img src="./media_part_a/to_replace_mario.jpg" alt="forward_noise0" width="150", height="120", width="120">
+    <p>Denoising steps at the timestep of 990, 840, 690, 540, 390, 240, 90, 30.</p>
+    <img src="./media_part_a/step_1p8_mario_inpaint_990.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_840.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_690.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_540.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_390.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_240.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_90.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1p8_mario_inpaint_30.jpg" alt="forward_noise0" width="120">
+
+
+    <h2>Part 1: Sampling Loops - 1.7.3 Text-Conditional Image-to-image Translation</h2>
+
+    <p>Here are the images of the text-conditional image-to-image translation with CFG for 3 images and various noise levels.</p>
+    <p>The noise level used here is i_start = 1, 3, 5, 7, 10, 20.</p>
+    <p>At high noise level, information about the original image is almost lost and the model generates image guided mostly by the text prompt.</p>
+    <p>An intermediate noise level is where interesting things are happening: the model is able to interpolate between the text prompt and the original image.</p>
+    <p>For example with my case, a dog that looks kind of like a bread, and a bicycle made of pencils.</p>
+
+    <p>Input image: Campanile, Conditioning prompt: "a rocket ship" </p>
+    <img src="./media_part_a/step_1p9_campanile_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_campanile_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_campanile_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_campanile_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_campanile_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_campanile_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/campanile.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    
+    <p>Input image: Bread, Conditioning prompt: "a photo of a dog" </p>
+    <img src="./media_part_a/step_1p9_bread_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bread_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bread_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bread_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bread_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bread_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/bread.jpg" alt="forward_noise0" width="150", height="150", width="150">
+    
+    <p>Input image: Bicycle, Conditioning prompt: "a pencil" </p>
+    <img src="./media_part_a/step_1p9_bicycle_1_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bicycle_3_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bicycle_5_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bicycle_7_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bicycle_10_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1p9_bicycle_20_gen.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/bicycle.jpg" alt="forward_noise0" width="150", height="150", width="150">
+
+    <h2>Part 1: Sampling Loops - 1.8 Visual Anagrams</h2>
+
+    <p>Here are three examples of visual anagrams with corresponding text 1 (unflipped) and text 2 (flipped) and intermediate generations:</p>
+
+    <p>Text 1: "an oil painting of people around a campfire", Text 2: "an oil painting of an old man" </p>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_990.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_840.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_690.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_540.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_390.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_240.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_90.jpg" alt="forward_noise0" width="150">
+    <br>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30.jpg" alt="forward_noise0" width="150", style="transform: rotate(180deg);">
+
+    <p>Text 1: "a photo of a dog", Text 2: "a man wearing a hat"</p>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_990_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_840_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_690_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_540_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_390_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_240_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_90_2.jpg" alt="forward_noise0" width="150">
+    <br>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30_2.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30_2.jpg" alt="forward_noise0" width="150", style="transform: rotate(180deg);">
+
+    <p>Text 1: "a photo of a hipster barista", Text 2: "a photo of the amalfi cost"</p>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_990_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_840_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_690_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_540_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_390_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_240_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_90_3.jpg" alt="forward_noise0" width="150">
+    <br>
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30_3.jpg" alt="forward_noise0" width="150">
+    <img src="./media_part_a/step_1_visual_anagram_campanile_30_3.jpg" alt="forward_noise0" width="150", style="transform: rotate(180deg);">
+
+    <h2>Part 1: Sampling Loops - 1.9 Hybrid Images</h2>
+
+    <p>Finally, these are sampling results for hybrid images with intermediate generations and text 1 (low frequency), text 2 (high frequency).</p>
+    <p>The result is inspired from Daniel Geng's recent work on factorized diffusion.</p>
+
+    <p>Text 1: "a lithograph of a skull", Text 2: "a lithograph of waterfalls" </p>
+    <img src="./media_part_a/step_1_hybrid_images_990.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_840.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_690.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_540.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_390.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_240.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_90.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_30.jpg" alt="forward_noise0" width="120">
+
+    <p>Text 1: "a photo of a pyramid", Text 2: "a photo of flower arrangements" </p>
+    <img src="./media_part_a/step_1_hybrid_images_990_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_840_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_690_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_540_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_390_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_240_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_90_2.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_30_2.jpg" alt="forward_noise0" width="120">
+
+    <p>Text 1: "a photo of a yin yang symbol", Text 2: "a photo of Rome". Nice to see the Rome Colosseum inside the yin yang.</p>
+    <img src="./media_part_a/step_1_hybrid_images_990_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_840_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_690_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_540_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_390_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_240_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_90_3.jpg" alt="forward_noise0" width="120">
+    <img src="./media_part_a/step_1_hybrid_images_30_3.jpg" alt="forward_noise0" width="120">
+
+    <h1>Project 5b : Diffusion Models from Scratch</h1>
+    <h2>Introduction</h2>
+    <p>The goal of this project is to implement a diffusion model (DDPM, Denoising Diffusion Probabilistic Models) with UNet on the MNIST dataset.</p>
+    <h2>Visualization of the noising process</h2>
+    <p>With sigma = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0, we can observe an increasing level of noise.</p>
+    <p>The original images are randomly taken from the evaluation split of MNIST dataset.</p>
+    <img src="./media/noising_process.png" alt="noising" width="800">
+
+    <h2>Training Loss Curve</h2>
+    <p>All hyperparameters (optimizer, batch size, epochs, LR, etc.) are identical to the provided setting.</p>
+    <p>I have overlayed the per-epoch evaluation loss on top of the per-step train loss curve. The model doesn't overfit until the epoch 5.</p>
+    <img src="./media/mnist_loss_curve.png" alt="training_loss_curve" width="600">
+
+    <h2>Sample results on the test set after the firs tand the fifth epoch of training</h2>
+    <p>After the first epoch (the first row), the model is not trained well and the results are not good.</p>
+    <p>After the fifth epoch (the second row), the reconstucted images are quite close to the original images.</p>
+    <p>I have observed that the quality gets gradually better as we progress on epochs.</p>
+    <img src="./media/sampled_result_epoch1_1.png" alt="mnist_results_epoch1" width="300">
+    <img src="./media/sampled_result_epoch1_2.png" alt="mnist_results_epoch1" width="300">
+    <img src="./media/sampled_result_epoch1_3.png" alt="mnist_results_epoch1" width="300">
+    <br>
+    <img src="./media/sampled_result_epoch5_1.png" alt="mnist_results_epoch5" width="300">
+    <img src="./media/sampled_result_epoch5_2.png" alt="mnist_results_epoch5" width="300">
+    <img src="./media/sampled_result_epoch5_3.png" alt="mnist_results_epoch5" width="300">
+
+    <h2>Sample results on the out-of-distribution noise level</h2>
+    <p>The UNet was trained on the noise level of sigma = 0.5. With various noise levels, I sampled the following result:</p>
+    <p>Quality of the denoised image is satisfactory when the noise level is less than or equal to the training noise level.</p>
+    <p>The model fails to denoise the image when the noise level is higher than the training noise level. (e.g. sigma = 1.0)</p>
+    <img src="./media/sample_result_ood.png" alt="out_of_distribution" width="800">
+
+    <h2>Training Loss Curve for Time-conditioned UNet</h2>
+    <p>For the time-conditioned UNet, I have used the same hyperparameters as the provided setting.</p>
+    <p>Initially I have used same t (drawn from a uniform distribution between 0 and T) for a batch but soon noticed that it results in no training.</p>
+    <p>As we have T of 300 and a batch size of about 400, it is important to use different t for each sample for the model to learn.</p>
+    <p>In the loss curve, we have twice the number of steps compared to the previous part since we have decreased the batch size by half.</p>
+    <img src="./media/timecond_loss_curve.png" alt="time_loss_curve" width="600">
+
+    <h2>Sampling Results for Various Epochs</h2>
+    <p>Here I present a 40 sampled results after Epoch 1, 5, 10, 15, 20.</p>
+    <p>As the seed is initialized just before the sampling, the initial normal distribution is the same for all instances.</p>
+    <p>Hence the results clearly show that the model is progressively generating more realistic digit images.</p>
+    <p>Epoch 1</p>
+    <img src="./media/timecond_epoch1.png" alt="time_results_epoch1" width="800">
+    <p>Epoch 5</p>
+    <img src="./media/timecond_epoch5.png" alt="time_results_epoch5" width="800">
+    <p>Epoch 10</p>
+    <img src="./media/timecond_epoch10.png" alt="time_results_epoch10" width="800">
+    <p>Epoch 15</p>
+    <img src="./media/timecond_epoch15.png" alt="time_results_epoch15" width="800">
+    <p>Epoch 20</p>
+    <img src="./media/timecond_epoch20.png" alt="time_results_epoch20" width="800">
+    <br>
+
+    <h2>Training Loss Curve for Time-and-Class-conditioned UNet</h2>
+    <p>Also for the class-conditioned UNet, I have used the same hyperparameters as the provided setting, including guidance factor of 5.0.</p>
+    <p>As we have 10 classes, I have used the one-hot encoding for the class label.</p>
+    <p>10% of the samples have class embeddings dropped out to learn unconditional generation.</p>
+    </p>The loss curve does not show overfitting at least until the epoch 20.</p>
+    <img src="./media/classcond_loss_curve.png" alt="timeclass_loss_curve" width="600">
+
+    <h2>Sampling Results for Various Epochs</h2>
+    <p>Here I present a 40 sampled results, 4 for each of the 10 digits, after Epoch 1, 5, 10, 15, 20.</p>
+    <p>Compared to the time-conditioned case where I have seen consistent improvement after epochs,</p>
+    <p>the performance of the class-conditioned model is already good enough after the 10th epoch.</p>
+    <p>It is interesting to see that the model is able to generate very realistic digit images with the class information, with just a few epochs of training.</p>
+    <p>Epoch 1</p>
+    <img src="./media/classcond_epoch1.png" alt="timeclass_results_epoch1" width="800">
+    <p>Epoch 5</p>
+    <img src="./media/classcond_epoch5.png" alt="timeclass_results_epoch5" width="800">
+    <p>Epoch 10</p>
+    <img src="./media/classcond_epoch10.png" alt="timeclass_results_epoch10" width="800">
+    <p>Epoch 15</p>
+    <img src="./media/classcond_epoch15.png" alt="timeclass_results_epoch15" width="800">
+    <p>Epoch 20</p>
+    <img src="./media/classcond_epoch20.png" alt="timeclass_results_epoch20" width="800">
+    
+    <p>This is the end of class projects. Thank you for preparing this interesting project materials!</p>
+
+
+</body>
+</html>
